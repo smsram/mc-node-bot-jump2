@@ -2,11 +2,11 @@ const mineflayer = require('mineflayer');
 
 let bot;
 let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 10; // Maximum retries within 4 hours
+const MAX_RECONNECT_ATTEMPTS = 20; // Maximum retries within 4 hours
 
 // Time Config (in milliseconds)
-const RUN_TIME = 4 * 60 * 60 * 1000; // 4 hours
-const DELAY_TIME = 4 * 60 * 60 * 1000; // 4 hours
+const RUN_TIME = 2 * 60 * 60 * 1000; // 2 hours
+const DELAY_TIME = 2 * 60 * 60 * 1000; // 2 hours
 
 // Start with 4-hour delay before first connection
 console.log(`⏳ Waiting ${DELAY_TIME / (60 * 60 * 1000)} hours before starting...`);
