@@ -1,28 +1,24 @@
 const mineflayer = require('mineflayer');
 
 let bot;
-let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 20; // Maximum retries within 4 hours
+let reconnecting = false;
+let moveInterval;
 
 // Time Config (in milliseconds)
-const RUN_TIME = 1 * 60 * 60 * 1000; // 1 hours
-const DELAY_TIME = 1 * 60 * 60 * 1000; // 1 hours
+const RUN_TIME = 1 * 60 * 60 * 1000; // 1 hour active
+const REST_TIME = 1 * 60 * 60 * 1000; // 1 hour rest
 
-// Start with 4-hour delay before first connection
-console.log(`⏳ Waiting ${DELAY_TIME / (60 * 60 * 1000)} hours before starting...`);
-setTimeout(createBot, DELAY_TIME);
+console.log(`⏳ Bot will wait ${REST_TIME / (60 * 60 * 1000)} hour before first join...`);
+setTimeout(createBot, REST_TIME); // First wait 1 hour
 
 function createBot() {
-  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-    console.log('🚫 Max reconnection attempts reached! Waiting 4 hours before restarting.');
-    scheduleReconnect();
-    return;
-  }
+  if (reconnecting) return; // Prevent duplicate connections
+  console.log('🚀 Joining server...');
 
   bot = mineflayer.createBot({
     host: 'smsram.aternos.me',
     port: 48121,
-    username: 'Mr_Bot',
+    username: 'bot_gadu',
     version: '1.21.4',
     auth: 'offline',
     viewDistance: 'tiny',
@@ -31,10 +27,10 @@ function createBot() {
   });
 
   bot.on('spawn', () => {
-    console.log('✅ Bot has spawned!');
-    reconnectAttempts = 0; // Reset reconnection count on successful join
+    console.log('✅ Bot joined and will move for 1 hour.');
+    reconnecting = false;
     startRandomMovement();
-    setTimeout(stopBot, RUN_TIME);
+    setTimeout(stopBot, RUN_TIME); // Stop bot after 1 hour
   });
 
   bot.on('kicked', (reason) => {
@@ -53,49 +49,34 @@ function createBot() {
   });
 }
 
-// Optimized movement function
+// Bot movement function
 function startRandomMovement() {
   if (!bot || !bot.entity) return;
 
   const actions = ['forward', 'back', 'left', 'right'];
-  let moveInterval = setInterval(() => {
-    if (!bot || !bot.entity) {
-      clearInterval(moveInterval);
-      return;
-    }
+  moveInterval = setInterval(() => {
+    if (!bot || !bot.entity) return clearInterval(moveInterval);
 
     const randomAction = actions[Math.floor(Math.random() * actions.length)];
     bot.clearControlStates();
     bot.setControlState(randomAction, true);
     setTimeout(() => bot.setControlState(randomAction, false), 200);
-  }, 10000); 
+  }, 10000); // Moves every 10 seconds
 }
 
-// Stop bot after 4 hours
+// Stop bot after 1 hour and schedule rejoin
 function stopBot() {
-  console.log('🛑 Stopping bot for 4 hours...');
+  console.log(`🛑 Bot leaving. Waiting ${REST_TIME / (60 * 60 * 1000)} hour before next join...`);
+  clearInterval(moveInterval);
   bot.end();
-  scheduleReconnect();
+  setTimeout(createBot, REST_TIME); // Rejoin after 1 hour
 }
 
-// Handle reconnections within 4 hours
+// Handle reconnection attempts
 function handleReconnection() {
-  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-    console.log('🚫 Max reconnection attempts reached! Waiting for next cycle.');
-    scheduleReconnect();
-    return;
-  }
+  if (reconnecting) return;
+  reconnecting = true;
 
-  reconnectAttempts++;
-  console.log(`🔁 Reconnect attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}...`);
+  console.log('🔁 Attempting to reconnect in 60 seconds...');
   setTimeout(createBot, 60000); // Try reconnecting every 60 seconds
-}
-
-// Schedule next cycle after 4-hour wait
-function scheduleReconnect() {
-  console.log(`⏳ Waiting ${DELAY_TIME / (60 * 60 * 1000)} hours before restarting...`);
-  setTimeout(() => {
-    reconnectAttempts = 0;
-    createBot();
-  }, DELAY_TIME);
 }
