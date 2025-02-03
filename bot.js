@@ -3,6 +3,7 @@ const mineflayer = require('mineflayer');
 let bot;
 let reconnecting = false;
 let moveInterval;
+let startTime; // Variable to track the start time
 
 // Time Config (in milliseconds)
 const RUN_TIME = 1 * 60 * 60 * 1000; // 1 hour active
@@ -14,6 +15,7 @@ setTimeout(createBot, REST_TIME); // First wait 1 hour
 function createBot() {
   if (reconnecting) return; // Prevent duplicate connections
   console.log('🚀 Joining server...');
+  startTime = Date.now(); // Set start time when bot joins
 
   bot = mineflayer.createBot({
     host: 'smsram.aternos.me',
@@ -74,9 +76,9 @@ function stopBot() {
 
 // Handle reconnection attempts
 function handleReconnection() {
-  if (reconnecting) return;
+  if (reconnecting || (Date.now() - startTime) > RUN_TIME) return; // Only reconnect if within the 1 hour active time
   reconnecting = true;
 
-  console.log('🔁 Attempting to reconnect in 60 seconds...');
-  setTimeout(createBot, 60000); // Try reconnecting every 60 seconds
+  console.log('🔁 Attempting to reconnect immediately...');
+  createBot(); // Try reconnecting immediately if within active period
 }
